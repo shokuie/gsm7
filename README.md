@@ -1,7 +1,7 @@
 
 # gsm7
 
-A GSM7 encoder and decoder that transcodes between ASCII and GSM7 which is used in as a default encoding for SMS transmission in GSM netwroks
+A GSM7 encoder and decoder that transcodes between ASCII and GSM7 which is used as a default encoding for SMS transmission in GSM netwroks
 ## Installation
 
 ```
@@ -21,5 +21,7 @@ const asciiText = gsm7.decode(Buffer.from('54747A0EDAF4D2735018B4A1D0CB733AC8FC9
 Encoding:
 
 ```
+const gsm7 = require('gsm7');
+
 const buff = gsm7.encode('This ~is a ^test for GSM7 {decoder}.');
 ```
