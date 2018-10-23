@@ -14,6 +14,7 @@
     "GSM7",
     "Encoder/Decoder"
   ],
+  "repository": "git@github.com:shokuie/gsm7.git",
   "author": "M. Shokuienia <shokuie@gmail.com>",
   "license": "ISC",
   "devDependencies": {
