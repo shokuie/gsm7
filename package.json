@@ -1,0 +1,24 @@
+{
+  "name": "gsm7",
+  "version": "1.0.0",
+  "description": "A GSM7 encoder/decoder for SMS transmission",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "SMS",
+    "GSM7",
+    "Encoder/Decoder"
+  ],
+  "author": "M. Shokuienia <shokuie@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-bytes": "^0.1.1",
+    "mocha": "^2.5.3"
+  }
+}
