@@ -1,107 +1,3 @@
-
-function decode(buff) {
-  let idx = 0;
-  let bitCap = 0;
-  let shiftBits = 0;
-  let curChar = null;
-  let text = '';
-  let character = '';
-  let extendedChar = false;
-
-  while (idx < buff.length) {
-    const pos = (idx % 7);
-
-    if (!pos && shiftBits) {
-      if ((shiftBits & 0x7f) === 27) {
-        extendedChar = true;
-      } else {
-        character = extendedChar ? extendedGsm7Charset[shiftBits & 0x7f] : gsm7Charset[shiftBits & 0x7f];
-        text += character;
-        extendedChar = false;
-      }
-      shiftBits >>= 7;
-    }
-
-    bitCap = Math.pow(2, 7 - pos) - 1;
-    curChar = (buff[idx] & bitCap) << pos;
-    curChar |= shiftBits;
-    shiftBits = buff[idx] >> (7 - pos);
-
-    if (curChar === 27) {
-      extendedChar = true;
-    } else {
-      character = extendedChar ? extendedGsm7Charset[curChar] : gsm7Charset[curChar];
-      text += character;
-      extendedChar = false;
-    }
-
-    idx++;
-  }
-
-  if (shiftBits && shiftBits !== 13 /* CR */) {
-    text += gsm7Charset[shiftBits];
-  }
-
-  return text;
-}
-
-function getCharCode(value) {
-  let retVal = Object.keys(gsm7Charset).find(key => gsm7Charset[key] === value);
-
-  if (!retVal) {
-    retVal = Object.keys(extendedGsm7Charset).find(key => extendedGsm7Charset[key] === value);
-    retVal = (retVal << 8) | 27;
-  }
-
-  return retVal;
-}
-
-function encode(content) {
-  let idx = 0;
-  let inputIdx = 0;
-  let bitCap = 0;
-  let asciiCode = 0;
-  let prevAsciiCode = 0;
-  let overflowChar = 0;
-  let retBuff = Buffer.from([]);
-
-  while (inputIdx < content.length) {
-    const pos = (idx % 8);
-
-    if (!overflowChar) {
-      asciiCode = getCharCode(content[inputIdx++]);
-    } else {
-      asciiCode = overflowChar;
-      overflowChar = 0;
-    }
-
-    if (asciiCode > 0x7f) {
-      overflowChar = asciiCode >> 8;
-      asciiCode &= 0xff;
-    }
-
-    if (!pos) {
-      prevAsciiCode = asciiCode;
-    } else {
-      bitCap = Math.pow(2, pos) - 1;
-      prevAsciiCode |= ((asciiCode & bitCap) << (8 - pos));
-      asciiCode >>= pos;
-
-      retBuff = Buffer.concat([retBuff, Buffer.from([prevAsciiCode])], retBuff.length + 1);
-      prevAsciiCode = asciiCode;
-    }
-
-    idx++;
-  }
-
-  if (prevAsciiCode) {
-    retBuff = Buffer.concat([retBuff, Buffer.from([prevAsciiCode])], retBuff.length + 1);
-  }
-
-  return retBuff;
-}
-
-
 /**
 * GSM 7 bit default alphabet lookup table
 */
@@ -127,7 +23,106 @@ const extendedGsm7Charset = {
   60: '[', 61: '~', 62: ']', 64: '|', 101: '&#8364;'
 };
 
+function decode(buff) {
+  let idx = 0;
+  let pos = 0;
+  let text = '';
+  let overflow = 0;
+  let extendedChar = false;
+
+  while (idx < buff.length) {
+    let char;
+    pos = idx % 7;
+
+    if (!pos && idx) {
+      char = overflow;
+      overflow = 0;
+
+      if (char !== 27) { // check if char is ESP
+        text += extendedChar ? extendedGsm7Charset[char] : gsm7Charset[char];
+        extendedChar = false;
+      } else {
+        extendedChar = true;
+      }
+    }
+
+    char = ((buff[idx] & Math.pow(2, 7 - pos) - 1) << pos) | overflow;
+    overflow = buff[idx] >> 7 - pos;
+
+    if (char !== 27) { // check if char is ESP
+      text += extendedChar ? extendedGsm7Charset[char] : gsm7Charset[char];
+      extendedChar = false;
+    } else {
+      extendedChar = true;
+    }
+
+    idx += 1;
+  }
+
+  if (pos === 6 && overflow !== 13) {
+    text += extendedChar ? extendedGsm7Charset[overflow] : gsm7Charset[overflow];
+  }
+
+  return text;
+}
+
+function getCharCode(value) {
+  let retVal = Object.keys(gsm7Charset).find(key => gsm7Charset[key] === value);
+
+  if (!retVal) {
+    retVal = Object.keys(extendedGsm7Charset).find(key => extendedGsm7Charset[key] === value);
+    retVal = (retVal << 8) | 27;
+  }
+
+  return retVal;
+}
+
+function encode(content) {
+  let idx = 0;
+  let inputIdx = 0;
+  let bitCap = 0;
+  let asciiCode = 0;
+  let prevAsciiCode = 0;
+  let overflowChar = 0;
+  let retBuff = Buffer.from([]);
+
+  while (inputIdx < content.length || overflowChar) {
+    const pos = (idx % 8);
+
+    if (!overflowChar) {
+      asciiCode = getCharCode(content[inputIdx++]);
+    } else {
+      asciiCode = overflowChar;
+      overflowChar = 0;
+    }
+
+    if (asciiCode > 0x7f) {
+      overflowChar = asciiCode >> 8;
+      asciiCode &= 0xff;
+    }
+
+    if (!pos) {
+      prevAsciiCode = asciiCode;
+    } else {
+      bitCap = Math.pow(2, pos) - 1;
+      prevAsciiCode |= ((asciiCode & bitCap) << (8 - pos));
+      asciiCode >>= pos;
+
+      retBuff = Buffer.concat([retBuff, Buffer.from([prevAsciiCode])], retBuff.length + 1);
+      prevAsciiCode = asciiCode;
+    }
+
+    idx += 1;
+  }
+
+  if (idx % 8) {
+    retBuff = Buffer.concat([retBuff, Buffer.from([(idx % 8) === 7 ? prevAsciiCode | 0x1A : prevAsciiCode])], retBuff.length + 1);
+  }
+
+  return retBuff;
+}
+
 module.exports = Object.freeze({
   decode,
-  encode
+  encode,
 });

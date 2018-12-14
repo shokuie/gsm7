@@ -1,6 +1,6 @@
 {
   "name": "gsm7",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "A GSM7 encoder/decoder for SMS transmission",
   "main": "index.js",
   "directories": {
@@ -20,6 +20,9 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "chai-bytes": "^0.1.1",
-    "mocha": "^2.5.3"
+    "eslint": "^5.10.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "mocha": "^5.2.0"
   }
 }
