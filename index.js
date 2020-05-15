@@ -20,7 +20,7 @@ const gsm7Charset = {
 const extendedGsm7Charset = {
   10: '\n', // Should be FORM-FEED but no good here
   20: '^', 40: '{', 41: '}', 47: '\\',
-  60: '[', 61: '~', 62: ']', 64: '|', 101: '&#8364;'
+  60: '[', 61: '~', 62: ']', 64: '|', 101: '€'
 };
 
 function decode(buff) {
