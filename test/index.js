@@ -37,7 +37,7 @@ describe('decode', () => {
   it('Should decode GSM7 buffer ending in 01', () => {
     const asciiText = gsm7.decode(Buffer.from('d4f29c9e769f01', 'hex'));
 
-    expect(asciiText).to.eql('Testing');
+    expect(asciiText).to.eql('Testing@');
   });
 });
 
